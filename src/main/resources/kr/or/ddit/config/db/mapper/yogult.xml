@@ -3,27 +3,23 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="yogult">
-	<select id="getCycleList" resultType="cycleVo">
-		select *
-		from cycle
-	</select>
-	
-	<insert id="insertDaily" parameterType="dailyVo">
-		insert into daily
-		values (#{cid}, #{pid}, #{dt}, #{cnt})
-	</insert>
 
-	<!-- 입력하고자 하는 데이터가 존재하면 update, 없으면 insert 
-		 입력하려고 하는 데이터 존재 여부를 확인 -->
-	<insert id="mergeDaily" parameterType="dailyVo">
-		
-		merge into daily
-		using dual on(
-		    daily.cid = #{cid} and daily.pid = #{pid} and daily.dt = #{dt})
-		when matched then update set 
-		    cnt = #{cnt}
-		when not matched then insert 
-		    (cid, pid, dt, cnt) values (#{cid}, #{pid}, #{dt}, #{cnt})
+	<!-- 일 실적 일괄 삭제 -->
+	<delete id="deleteDailyYm" parameterType="String">
+		delete daily where dt like #{ym} || '%'
+	</delete>
+	
+	<!-- 일 실적 생성 -->
+	<insert id="dailyBatchYm" parameterType="String">
+		insert into daily
+		select cycle.cid, cycle.pid, cal.dt, cycle.cnt
+		from cycle,
+		    (select to_char(to_date(#{ym} || '01', 'yyyyMMdd') + (level-1), 'd')day, -- 일자 만들기/ level은 1부터 시작하니까 0으로 만들어줌
+		    to_char(to_date(#{ym} || '01', 'yyyyMMdd') + (level-1), 'yyyyMMdd')dt -- 요일 구하기
+		    from dual
+		    connect by level &lt;= last_day(to_date(#{ym}, 'yyyyMM')) - to_date(#{ym}, 'yyyyMM') + 1) cal
+		where cycle.day = cal.day
 	</insert>
+	
 </mapper>
 
