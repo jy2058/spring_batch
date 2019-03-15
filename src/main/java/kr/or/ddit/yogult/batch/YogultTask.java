@@ -1,12 +1,12 @@
-package kr.or.ddit.batch.hello;
+package kr.or.ddit.yogult.batch;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
@@ -17,27 +17,31 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.scheduling.annotation.Scheduled;
 
-public class HelloTask {
-	private Logger logger = LoggerFactory.getLogger(HelloTask.class);
+public class YogultTask {
 	
 	@Resource(name="jobLauncher")
 	private JobLauncher jobLauncher;
 	
-	@Resource(name="helloJob")
-	private Job helloJob;
+	@Resource(name="yogultJob")
+	private Job yogultJob;
 	
-	@Scheduled(cron="*/3 * * * * *")
-	public void helloTask(){
-		logger.debug("helloTask");
+	// 매달 1일 일 실적 생성 배치 잡 실행
+	// 초 분 시간 일 월 요일
+	@Scheduled(cron="* * 1 1 * *")	// 매달 1일 1시
+	public void yogultDailyJob(){
+		Map<String, JobParameter> map = new HashMap<String, JobParameter>();
+		
+		Date today = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMM");
+		String ym = sdf.format(today);
+		
+		map.put("ym", new JobParameter(ym));
 		
 		try {
-			Map<String, JobParameter> map = new HashMap<String, JobParameter>();
-			map.put("st", new JobParameter(System.currentTimeMillis()));
-			
-			jobLauncher.run(helloJob, new JobParameters());
-			//jobLauncher.run(helloJob, new JobParameters(map));
+			jobLauncher.run(yogultJob, new JobParameters(map));
 		} catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException
 				| JobParametersInvalidException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
